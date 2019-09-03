@@ -11,11 +11,21 @@ const schema = gql`
     users: [User!]
     me: User
     user(id: ID!): User
+
+    messages: [Message!]!
+    message(id: ID!): Message!
   }
 
   type User {
     id: ID!
-    username: String!
+    username: String!,
+    messages: [Message!]
+  }
+
+  type Message {
+    id: ID!
+    text: String!
+    user: User!
   }
 `;
 
@@ -23,10 +33,25 @@ let users = {
   1: {
     id: '1',
     username: 'Jon Palacio',
+    messageIds: [1]
   },
   2: {
     id: '2',
-    username: 'Dain'
+    username: 'Dain',
+    messageIds: [2]
+  }
+}
+
+let messages = {
+  1: {
+    id: '1',
+    text: 'Hello World',
+    userId: '1'
+  },
+  2: {
+    id: '2',
+    text: 'By World',
+    userId: '2'
   }
 }
 
@@ -42,8 +67,25 @@ const resolvers = {
     },
     me: (parent, args, { me }) => {
       return me;
+    },
+    messages: () => {
+      return Object.values(messages);
+    },
+    message: (parent, { id }) => {
+      return messages[id]
     }
   },
+
+  Message: {
+    user: message => {
+      return users[message.userId];
+    }
+  },
+  User: {
+    messages: user => {
+      return Object.values(messages).filter(message => message.userId === user.id)
+    }
+  }
 }
 
 const server = new ApolloServer({
